@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle Financeiro</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#1a0626;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+/* LOGIN */
+
+.login{
+text-align:center;
+}
+
+.login input{
+padding:12px;
+font-size:18px;
+margin:10px;
+border-radius:8px;
+border:none;
+}
+
+.login button{
+padding:12px 20px;
+font-size:18px;
+background:#9333ea;
+border:none;
+color:white;
+border-radius:8px;
+cursor:pointer;
+}
+
+/* APP */
+
+.app{
+display:none;
+width:750px;
+max-width:95%;
+background:#2e1065;
+padding:20px;
+border-radius:20px;
+overflow:auto;
+}
+
+.topo{
+text-align:center;
+margin-bottom:20px;
+}
+
+.saldo{
+font-size:45px;
+font-weight:bold;
+}
+
+.botoes{
+display:flex;
+justify-content:space-between;
+margin-bottom:20px;
+}
+
+.btn{
+width:70px;
+height:70px;
+font-size:30px;
+border:none;
+border-radius:50%;
+cursor:pointer;
+color:white;
+}
+
+.mais{background:#22c55e;}
+.menos{background:#ef4444;}
+
+/* MESES */
+
+.mes{
+padding:15px;
+border-radius:12px;
+margin-bottom:20px;
+}
+
+/* CORES DOS MESES */
+
+.mes:nth-child(1){background:#4c1d95;}
+.mes:nth-child(2){background:#5b21b6;}
+.mes:nth-child(3){background:#6d28d9;}
+.mes:nth-child(4){background:#7c3aed;}
+.mes:nth-child(5){background:#8b5cf6;}
+.mes:nth-child(6){background:#9333ea;}
+.mes:nth-child(7){background:#a855f7;}
+.mes:nth-child(8){background:#c084fc;}
+
+.lista{
+margin-top:10px;
+}
+
+/* ENTRADAS */
+
+.entrada{
+background:#065f46;
+padding:8px;
+border-radius:8px;
+margin-bottom:8px;
+}
+
+/* GASTOS */
+
+.gasto{
+background:#7f1d1d;
+padding:8px;
+border-radius:8px;
+margin-bottom:8px;
+}
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.8);
+justify-content:center;
+align-items:center;
+}
+
+.caixa{
+background:#2e1065;
+padding:30px;
+border-radius:15px;
+text-align:center;
+}
+
+.caixa input{
+padding:10px;
+margin:10px;
+font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login" id="login">
+
+<h2>Digite a senha</h2>
+
+<input type="password" id="senha">
+
+<br>
+
+<button onclick="entrar()">Entrar</button>
+
+</div>
+
+<div class="app" id="app">
+
+<div class="topo">
+
+<div>Saldo total</div>
+
+<div class="saldo">R$ <span id="saldo">0</span></div>
+
+</div>
+
+<div class="botoes">
+
+<button class="btn mais" onclick="abrir('+')">+</button>
+
+<button class="btn menos" onclick="abrir('-')">-</button>
+
+</div>
+
+<div id="conteudo"></div>
+
+</div>
+
+<div class="modal" id="modal">
+
+<div class="caixa">
+
+<h3>Novo registro</h3>
+
+<input id="valor" type="number" placeholder="Valor"><br>
+
+<input id="texto" placeholder="Descrição"><br>
+
+<button onclick="salvar()">Salvar</button>
+
+<button onclick="fechar()">Cancelar</button>
+
+</div>
+
+</div>
+
+<script>
+
+let senhaCorreta="1234"
+
+function entrar(){
+
+let senha=document.getElementById("senha").value
+
+if(senha==senhaCorreta){
+
+document.getElementById("login").style.display="none"
+document.getElementById("app").style.display="block"
+
+}else alert("Senha incorreta")
+
+}
+
+let dados=JSON.parse(localStorage.getItem("dados"))||[]
+
+function salvarLocal(){
+
+localStorage.setItem("dados",JSON.stringify(dados))
+
+}
+
+function render(){
+
+let conteudo=document.getElementById("conteudo")
+
+conteudo.innerHTML=""
+
+let saldo=0
+
+let meses={}
+
+dados.forEach(d=>{
+
+if(!meses[d.mes]) meses[d.mes]=[]
+
+meses[d.mes].push(d)
+
+})
+
+Object.keys(meses).forEach(m=>{
+
+let divMes=document.createElement("div")
+
+divMes.className="mes"
+
+let titulo=document.createElement("h3")
+
+titulo.innerText=m
+
+divMes.appendChild(titulo)
+
+meses[m].forEach(d=>{
+
+let item=document.createElement("div")
+
+item.className=(d.tipo=="+")?"entrada":"gasto"
+
+item.innerHTML=`
+${d.data} - ${d.texto} : ${d.tipo} R$${d.valor}
+`
+
+divMes.appendChild(item)
+
+if(d.tipo=="+") saldo+=d.valor
+else saldo-=d.valor
+
+})
+
+conteudo.appendChild(divMes)
+
+})
+
+document.getElementById("saldo").innerText=saldo
+
+}
+
+let tipoAtual="+"
+
+function abrir(tipo){
+
+tipoAtual=tipo
+document.getElementById("modal").style.display="flex"
+
+}
+
+function fechar(){
+
+document.getElementById("modal").style.display="none"
+
+}
+
+function salvar(){
+
+let valor=Number(document.getElementById("valor").value)
+
+let texto=document.getElementById("texto").value
+
+if(!valor||!texto)return
+
+let hoje=new Date()
+
+let data=hoje.toLocaleDateString()
+
+let mes=hoje.toLocaleString("pt-BR",{month:"long",year:"numeric"})
+
+dados.push({
+
+tipo:tipoAtual,
+valor:valor,
+texto:texto,
+data:data,
+mes:mes
+
+})
+
+salvarLocal()
+
+render()
+
+fechar()
+
+document.getElementById("valor").value=""
+document.getElementById("texto").value=""
+
+}
+
+render()
+
+</script>
+
+</body>
+</html>
